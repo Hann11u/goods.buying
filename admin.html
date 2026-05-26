@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>代購後台管理</title>
+<style>
+:root{
+  --bg:#faf8f5;--bg2:#f2efe9;--bg3:#e8e4dc;
+  --text:#2c2825;--text2:#6b6560;--text3:#9b958e;
+  --border:#ddd8d0;--border2:#ccc7be;
+  --accent:#3d3530;--accent-fg:#faf8f5;
+  --green:#2d6b4f;--green-bg:#e8f4ed;--green-border:#8ecaaa;
+  --red:#8b2020;--red-bg:#faeaea;--red-border:#e0a0a0;
+  --amber:#7a4a10;--amber-bg:#fdf0dc;--amber-border:#e8c07a;
+  --blue:#1a4d7a;--blue-bg:#e8f1fa;--blue-border:#90b8e0;
+  --radius:10px;--radius-sm:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans TC',sans-serif;font-size:14px;color:var(--text);background:var(--bg);min-height:100vh}
+.wrap{max-width:780px;margin:0 auto;padding:1rem}
+
+/* login */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
+.login-box{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;width:100%;max-width:340px;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+.login-title{font-size:17px;font-weight:700;margin-bottom:4px;text-align:center}
+.login-sub{font-size:12px;color:var(--text2);text-align:center;margin-bottom:20px}
+
+/* tabs */
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:1.5rem}
+.tab{padding:10px 18px;cursor:pointer;font-size:14px;color:var(--text2);border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit}
+.tab.active{color:var(--text);border-bottom-color:var(--accent);font-weight:600}
+.tab:hover:not(.active){color:var(--text)}
+.panel{display:none}.panel.active{display:block}
+.stabs{display:flex;gap:6px;margin-bottom:1rem;flex-wrap:wrap}
+.stab{padding:5px 13px;border-radius:20px;cursor:pointer;font-size:12px;border:1px solid var(--border);color:var(--text2);background:transparent;transition:all .15s;font-family:inherit}
+.stab.active{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.stab:hover:not(.active){background:var(--bg2)}
+
+/* cards */
+.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:12px}
+.card-dashed{background:var(--bg);border:1px dashed var(--border2);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:12px}
+
+/* stats */
+.stat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:1.5rem}
+.stat{background:var(--bg2);border-radius:var(--radius-sm);padding:10px 12px;border:1px solid var(--border)}
+.stat-label{font-size:11px;color:var(--text2);margin-bottom:3px;line-height:1.3}
+.stat-val{font-size:16px;font-weight:600}.stat-val.warn{color:var(--red)}
+
+/* form */
+label{font-size:12px;color:var(--text2);display:block;margin-bottom:3px;font-weight:500}
+input,select,textarea{width:100%;padding:7px 10px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-family:inherit}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+.form-row{display:grid;gap:8px;margin-bottom:8px}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr 1fr}
+
+/* buttons */
+.btn{padding:7px 16px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer;font-size:13px;font-weight:500;font-family:inherit;transition:background .12s}
+.btn:hover{background:var(--bg2)}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}.btn.primary:hover{opacity:.85}
+.btn.danger{color:var(--red);border-color:var(--red-border)}.btn.danger:hover{background:var(--red-bg)}
+.btn.success{color:var(--green);border-color:var(--green-border)}.btn.success:hover{background:var(--green-bg)}
+.btn.sm{padding:5px 11px;font-size:12px}.btn.xs{padding:3px 8px;font-size:11px}
+
+/* table */
+.tbl{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+.tbl th{text-align:left;padding:7px 8px;color:var(--text2);font-weight:500;border-bottom:1px solid var(--border);font-size:11px;white-space:nowrap;background:var(--bg2)}
+.tbl td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:middle;overflow:hidden;text-overflow:ellipsis}
+.tbl tr:last-child td{border-bottom:none}.tbl tr:hover td{background:var(--bg2)}
+
+/* badges */
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.b-paid{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.b-partial{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)}
+.b-unpaid{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.b-blue{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
+.b-gray{background:var(--bg2);color:var(--text2);border:1px solid var(--border)}
+.b-done{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+
+/* progress */
+.prog-steps{display:flex;align-items:flex-start;margin:10px 0}
+.step{flex:1;text-align:center;position:relative;min-width:0}
+.step-line{position:absolute;top:11px;left:calc(50% + 12px);right:calc(-50% + 12px);height:1px;background:var(--border)}
+.step-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;font-size:10px;font-weight:600}
+.sd-done{background:var(--green);color:#fff}.sd-active{background:var(--accent);color:var(--accent-fg)}.sd-todo{background:var(--bg2);color:var(--text2);border:1px solid var(--border)}
+.step-lbl{font-size:10px;color:var(--text2);line-height:1.3}.step-lbl.active{color:var(--text);font-weight:600}
+.proof-area{margin-top:5px;padding:5px 7px;border-radius:var(--radius-sm);border:1px dashed var(--border2);background:var(--bg2);font-size:11px;color:var(--text2)}
+.proof-area.has{background:var(--green-bg);border-color:var(--green-border);color:var(--green);cursor:pointer}
+
+/* order stats */
+.order-stats{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-top:10px}
+.order-stats-title{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.stat-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:3px 0;border-bottom:1px solid var(--border)}
+.stat-row:last-child{border-bottom:none}
+.stat-row .prod-name{color:var(--text);max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stat-row .prod-count{font-weight:600;color:var(--accent)}
+.stat-row .prod-ppl{color:var(--text2);font-size:11px;margin-left:6px}
+
+/* misc */
+.sep{height:1px;background:var(--border);margin:12px 0}
+.fb{display:flex;align-items:center;gap:8px}.fbb{display:flex;align-items:center;justify-content:space-between}
+.notice{background:var(--bg2);border-radius:var(--radius-sm);border:1px solid var(--border);padding:9px 13px;font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.6}
+.acct-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-top:4px}
+.sec-title{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em}
+.copy-tip{font-size:11px;color:var(--text2);background:var(--bg2);padding:2px 7px;border-radius:4px;cursor:pointer;margin-left:6px;border:1px solid var(--border);font-family:inherit}
+.prod-img{width:36px;height:36px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border)}
+
+/* modal */
+.overlay{display:none;position:fixed;inset:0;background:rgba(44,40,37,.5);z-index:200;align-items:center;justify-content:center;padding:1rem}
+.overlay.open{display:flex}
+.modal{background:var(--bg);border-radius:var(--radius);padding:1.5rem;width:500px;max-width:94vw;max-height:88vh;overflow-y:auto;border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.12)}
+.modal-title{font-size:15px;font-weight:600;margin-bottom:1rem}
+
+/* upload */
+.upload-area{border:1px dashed var(--border2);border-radius:var(--radius-sm);padding:14px;text-align:center;cursor:pointer;background:var(--bg2)}
+.upload-area:hover{background:var(--bg3)}
+.upload-area input[type=file]{display:none}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-title">代購後台</div>
+    <div class="login-sub" style="margin-bottom:20px">請輸入管理密碼</div>
+    <div style="margin-bottom:10px">
+      <label>密碼</label>
+      <input id="pw-input" type="password" placeholder="••••••" onkeydown="if(event.key==='Enter')checkPw()">
+    </div>
+    <button class="btn primary" style="width:100%" onclick="checkPw()">登入</button>
+    <div id="pw-err" style="color:var(--red);font-size:12px;margin-top:8px;display:none;text-align:center">密碼錯誤，請再試一次。</div>
+    <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:16px">預設密碼：<code>admin1234</code><br>請在帳號設定中修改</div>
+  </div>
+</div>
+
+<!-- ADMIN MAIN (hidden until login) -->
+<div id="admin-main" style="display:none">
+<div class="wrap">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+    <div style="font-size:16px;font-weight:700">代購後台管理</div>
+    <button class="btn xs" onclick="logout()">登出</button>
+  </div>
+
+  <div class="stat-grid" id="stats-grid"></div>
+
+  <div class="stabs">
+    <div class="stab active" onclick="gotoSub('orders')">訂單管理</div>
+    <div class="stab" onclick="gotoSub('products')">商品設定</div>
+    <div class="stab" onclick="gotoSub('progress')">整體進度</div>
+    <div class="stab" onclick="gotoSub('calc')">價格試算</div>
+    <div class="stab" onclick="gotoSub('settings')">帳號設定</div>
+  </div>
+
+  <!-- ORDERS -->
+  <div id="sub-orders">
+    <div class="fbb" style="margin-bottom:10px;gap:8px;flex-wrap:wrap">
+      <div class="fb" style="gap:6px;flex-wrap:wrap">
+        <input id="s-keyword" placeholder="搜尋暱稱 / 末五碼…" style="width:150px" oninput="renderOrders()">
+        <select id="s-status" onchange="renderOrders()" style="width:auto">
+          <option value="">全部狀態</option><option value="unpaid">未付訂金</option>
+          <option value="partial">已付訂金</option><option value="paid">全額已付</option>
+        </select>
+        <select id="s-camp" onchange="renderOrders()" style="width:auto"><option value="">全部批次</option></select>
+      </div>
+      <button class="btn primary sm" onclick="openAddOrder()">＋ 新增訂單</button>
+    </div>
+    <div id="orders-wrap"></div>
+  </div>
+
+  <!-- PRODUCTS -->
+  <div id="sub-products" style="display:none">
+    <div class="card">
+      <div class="sec-title">商品列表</div>
+      <div id="product-list"></div>
+      <div class="sep"></div>
+      <div class="sec-title">新增商品</div>
+      <div class="form-row g3">
+        <div><label>商品名稱</label><input id="np-name" placeholder="e.g. 帆布袋A"></div>
+        <div><label>單價（NT$）</label><input id="np-price" type="number" placeholder="1200"></div>
+        <div><label>類別</label><input id="np-cat" list="cat-list" placeholder="自行輸入或選擇"><datalist id="cat-list"></datalist></div>
+      </div>
+      <div class="form-row g2">
+        <div>
+          <label>商品圖片（選填）</label>
+          <div class="upload-area" onclick="document.getElementById('np-img-file').click()">
+            <input type="file" id="np-img-file" accept="image/*" onchange="handleProdImg('np-img-data',this,'np-img-preview')">
+            <div style="font-size:12px;color:var(--text2)">📷 點此上傳圖片</div>
+          </div>
+          <img id="np-img-preview" style="max-width:80px;border-radius:var(--radius-sm);margin-top:6px;display:none">
+          <input type="hidden" id="np-img-data">
+        </div>
+        <div><label>所屬批次（選填）</label><select id="np-camp"><option value="">不指定</option></select></div>
+      </div>
+      <button class="btn primary sm" onclick="addProduct()">新增</button>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div id="sub-progress" style="display:none">
+    <div class="notice">推進進度後顧客查詢頁即時反映。已完成的團自動沉底。</div>
+    <div id="campaign-list"></div>
+    <div class="card-dashed">
+      <div class="sec-title">新增批次</div>
+      <div class="form-row g2">
+        <div><label>批次名稱</label><input id="nc-name" placeholder="e.g. 春季韓漫團"></div>
+        <div><label>截止說明 <button class="copy-tip" onclick="copyArrow()">→ 複製箭頭</button></label>
+          <input id="nc-deadline" placeholder="5/28 12:00 喊單截止 → 5/28 23:59 訂金截止"></div>
+      </div>
+      <div class="form-row" style="margin-bottom:10px">
+        <label>注意事項（顯示於下單頁）</label>
+        <textarea id="nc-notice" rows="2" placeholder="e.g. 請確認尺寸後再下單，不接受退換"></textarea>
+      </div>
+      <button class="btn primary sm" onclick="addCampaign()">建立批次</button>
+    </div>
+  </div>
+
+  <!-- CALC -->
+  <div id="sub-calc" style="display:none">
+    <div class="card">
+      <div class="sec-title">價格試算</div>
+      <div class="notice">匯率手動輸入，上次記憶值自動帶入。建議對照<a href="https://www.bot.com.tw/tw/home" target="_blank" style="color:var(--blue)">臺灣銀行牌告匯率</a>。</div>
+      <div class="form-row g2">
+        <div><label>原價（外幣）</label><input id="c-price" type="number" oninput="doCalc()"></div>
+        <div><label>幣別</label><select id="c-cur" onchange="loadRate()">
+          <option value="JPY">日幣 JPY</option><option value="KRW">韓幣 KRW</option>
+          <option value="CNY">人民幣 CNY</option><option value="USD">美金 USD</option></select></div>
+      </div>
+      <div class="form-row g2">
+        <div><label>匯率（1 外幣 = ? NT$）</label><input id="c-rate" type="number" step="0.001" oninput="saveRate();doCalc()"></div>
+        <div><label>運費分攤（NT$）</label><input id="c-ship" type="number" oninput="doCalc()"></div>
+      </div>
+      <div class="form-row g3">
+        <div><label>服務費 %</label><input id="c-fee" type="number" oninput="doCalc()"></div>
+        <div><label>關稅 %</label><input id="c-tax" type="number" oninput="doCalc()"></div>
+        <div><label>進位至</label><select id="c-round" onchange="doCalc()">
+          <option value="1">不進位</option><option value="10">10元</option>
+          <option value="50">50元</option><option value="100">100元</option></select></div>
+      </div>
+      <div class="sep"></div>
+      <div id="calc-out" style="font-size:13px;color:var(--text2)">輸入數值後顯示結果</div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="sub-settings" style="display:none">
+    <div class="card">
+      <div class="sec-title">收款帳號設定</div>
+      <div class="form-row g2">
+        <div><label>銀行名稱</label><input id="acct-bank" placeholder="玉山銀行 008"></div>
+        <div><label>帳號</label><input id="acct-num" placeholder="1234-567-890123"></div>
+      </div>
+      <div style="margin-bottom:8px"><label>附加說明（戶名、備注提示等）</label>
+        <textarea id="acct-note" rows="2" placeholder="戶名：王小明&#10;備注請填末五碼"></textarea></div>
+      <div style="margin-bottom:8px">
+        <label>QR Code 圖片（選填）</label>
+        <div class="upload-area" onclick="document.getElementById('acct-img-file').click()">
+          <input type="file" id="acct-img-file" accept="image/*" onchange="handleProdImg('acct-img-data',this,'acct-img-preview')">
+          <div style="font-size:12px;color:var(--text2)">📷 點此上傳 QR Code</div>
+        </div>
+        <img id="acct-img-preview" style="max-width:180px;border-radius:var(--radius-sm);margin-top:6px;display:none">
+        <input type="hidden" id="acct-img-data">
+      </div>
+      <div class="sep"></div>
+      <div class="sec-title">訂金設定</div>
+      <div class="form-row g2">
+        <div><label>訂金比例 %</label><input id="dep-pct" type="number" value="50" min="1" max="100"></div>
+        <div><label>說明文字（顯示給顧客）</label><input id="dep-note" placeholder="訂金五成，餘款到貨後付清"></div>
+      </div>
+      <div class="sep"></div>
+      <div class="sec-title">後台密碼</div>
+      <div class="form-row g2">
+        <div><label>新密碼</label><input id="new-pw" type="password" placeholder="留空不修改"></div>
+        <div><label>確認新密碼</label><input id="new-pw2" type="password" placeholder="留空不修改"></div>
+      </div>
+      <button class="btn primary sm" onclick="saveSettings()">儲存所有設定</button>
+      <span id="saved-msg" style="font-size:12px;color:var(--green);margin-left:10px;display:none">✓ 已儲存</span>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- MODALS -->
+<div class="overlay" id="modal-add">
+  <div class="modal">
+    <div class="fbb" style="margin-bottom:12px"><div class="modal-title">新增訂單</div><button class="btn xs" onclick="cm('modal-add')">✕</button></div>
+    <div class="form-row g3">
+      <div><label>顧客暱稱</label><input id="mo-id"></div>
+      <div><label>末五碼</label><input id="mo-ref" maxlength="5"></div>
+      <div><label>查詢密碼</label><input id="mo-pin" maxlength="4" placeholder="4位數"></div>
+    </div>
+    <div class="form-row g2">
+      <div><label>聯絡方式</label><input id="mo-contact"></div>
+      <div><label>所屬批次</label><select id="mo-camp"></select></div>
+    </div>
+    <div class="sec-title">商品數量</div>
+    <div id="mo-items" style="margin-bottom:8px"></div>
+    <div><label>備註</label><input id="mo-note" style="margin-bottom:10px"></div>
+    <div class="fbb">
+      <div style="font-size:13px">小計：<span id="mo-total" style="font-weight:600">NT$ 0</span></div>
+      <button class="btn primary sm" onclick="saveOrder()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="modal-edit">
+  <div class="modal">
+    <div class="fbb" style="margin-bottom:12px"><div class="modal-title">編輯訂單</div><button class="btn xs" onclick="cm('modal-edit')">✕</button></div>
+    <div id="edit-body"></div>
+    <div class="sep"></div>
+    <div class="fbb">
+      <button class="btn danger sm" id="del-btn">刪除訂單</button>
+      <button class="btn primary sm" id="save-btn">儲存</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="modal-proof">
+  <div class="modal">
+    <div class="fbb" style="margin-bottom:12px"><div class="modal-title" id="proof-title">憑證</div><button class="btn xs" onclick="cm('modal-proof')">✕</button></div>
+    <div id="proof-body"></div>
+  </div>
+</div>
+
+<div class="overlay" id="modal-prod-edit">
+  <div class="modal">
+    <div class="fbb" style="margin-bottom:12px"><div class="modal-title">編輯商品</div><button class="btn xs" onclick="cm('modal-prod-edit')">✕</button></div>
+    <div id="pe-body"></div>
+    <div class="fbb" style="margin-top:12px">
+      <button class="btn danger sm" onclick="delProd()">刪除</button>
+      <button class="btn primary sm" onclick="saveProd()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="modal-camp-edit">
+  <div class="modal">
+    <div class="fbb" style="margin-bottom:12px"><div class="modal-title">編輯批次</div><button class="btn xs" onclick="cm('modal-camp-edit')">✕</button></div>
+    <div id="ce-body"></div>
+    <div class="fbb" style="margin-top:12px">
+      <button class="btn danger sm" onclick="delCampEdit()">刪除批次</button>
+      <button class="btn primary sm" onclick="saveCampEdit()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── storage (shared keys with index.html) ──
+const KEY_O='dg_orders',KEY_P='dg_products',KEY_C='dg_campaigns',KEY_S='dg_settings',KEY_R='dg_rates',KEY_CAT='dg_cats',KEY_PW='dg_pw';
+function ld(k,d){try{const v=localStorage.getItem(k);return v!==null?JSON.parse(v):d}catch{return d}}
+function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
+function uid(){return '_'+Math.random().toString(36).slice(2,8)}
+function cm(id){document.getElementById(id).classList.remove('open')}
+
+function getO(){return ld(KEY_O,[])}
+function getP(){return ld(KEY_P,[])}
+function getC(){return ld(KEY_C,[])}
+function getS(){return ld(KEY_S,{bank:'',num:'',note:'',img:'',depositPct:50,depositNote:'訂金五成，餘款到貨後付清',pw:'admin1234'})}
+function saveO(v){sv(KEY_O,v)}
+function saveP(v){sv(KEY_P,v)}
+function saveC(v){sv(KEY_C,v)}
+
+const PROOF_IDX=2;
+const DSTEPS=['喊單截止','付訂金','已於官網下單','官方已出貨','已到台灣','發貨完成'];
+
+function oTotal(o){const P=getP();return Object.entries(o.items).reduce((s,[k,v])=>{const p=P.find(x=>x.id===k);return s+(p?p.price*v:0)},0)}
+
+// ── login ──
+function checkPw(){
+  const S=getS();
+  const pw=document.getElementById('pw-input').value;
+  const correct=S.pw||'admin1234';
+  if(pw===correct){
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('admin-main').style.display='';
+    renderStats();renderOrders();updateCampFilter();loadRate();
+  } else {
+    document.getElementById('pw-err').style.display='';
+    document.getElementById('pw-input').value='';
+  }
+}
+function logout(){
+  document.getElementById('admin-main').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('pw-input').value='';
+  document.getElementById('pw-err').style.display='none';
+}
+
+// ── sub tabs ──
+function gotoSub(s){
+  ['orders','products','progress','calc','settings'].forEach(x=>document.getElementById('sub-'+x).style.display=x===s?'block':'none');
+  document.querySelectorAll('.stab').forEach((el,i)=>el.classList.toggle('active',['orders','products','progress','calc','settings'][i]===s));
+  if(s==='products')renderProds();
+  if(s==='progress')renderCamps();
+  if(s==='settings')loadSettings();
+  if(s==='orders'){updateCampFilter();renderOrders()}
+}
+
+// ── stats ──
+function renderStats(){
+  const O=getO(),S=getS();
+  const rev=O.reduce((s,o)=>s+oTotal(o),0);
+  const coll=O.reduce((s,o)=>s+o.paid,0);
+  const upCnt=O.filter(o=>o.status==='unpaid').length;
+  const depPend=O.filter(o=>o.status==='unpaid').reduce((s,o)=>s+Math.ceil(oTotal(o)*S.depositPct/100),0);
+  document.getElementById('stats-grid').innerHTML=`
+    <div class="stat"><div class="stat-label">總訂單</div><div class="stat-val">${O.length}</div></div>
+    <div class="stat"><div class="stat-label">應收總額</div><div class="stat-val">NT$&nbsp;${rev.toLocaleString()}</div></div>
+    <div class="stat"><div class="stat-label">未付訂金</div><div class="stat-val warn">${upCnt} 筆</div></div>
+    <div class="stat"><div class="stat-label">訂金未收</div><div class="stat-val warn">NT$&nbsp;${depPend.toLocaleString()}</div></div>
+    <div class="stat"><div class="stat-label">總額未收</div><div class="stat-val warn">NT$&nbsp;${(rev-coll).toLocaleString()}</div></div>`;
+}
+
+// ── orders ──
+function updateCampFilter(){
+  const C=getC();
+  const s=document.getElementById('s-camp');if(!s)return;
+  s.innerHTML='<option value="">全部批次</option>'+C.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+}
+function sBadge(s){
+  if(s==='paid')return'<span class="badge b-paid">全額已付</span>';
+  if(s==='partial')return'<span class="badge b-partial">已付訂金</span>';
+  return'<span class="badge b-unpaid">未付訂金</span>';
+}
+function renderOrders(){
+  updateCampFilter();
+  const O=getO(),P=getP(),C=getC();
+  const kw=(document.getElementById('s-keyword')?.value||'').toLowerCase();
+  const sf=document.getElementById('s-status')?.value||'';
+  const sc=document.getElementById('s-camp')?.value||'';
+  const list=O.filter(o=>{
+    const km=!kw||o.customerId.toLowerCase().includes(kw)||(o.ref&&o.ref.includes(kw))||(o.ref5&&o.ref5.includes(kw));
+    return km&&(!sf||o.status===sf)&&(!sc||o.campaign===sc);
+  });
+  if(!list.length){document.getElementById('orders-wrap').innerHTML='<div style="color:var(--text2);font-size:13px;padding:1rem 0">沒有符合的訂單</div>';return}
+  document.getElementById('orders-wrap').innerHTML=`<div style="overflow-x:auto"><table class="tbl">
+    <thead><tr><th>ID</th><th>商品</th><th>總額</th><th>付款</th><th>進度</th><th>尾款</th><th></th></tr></thead>
+    <tbody>${list.map(o=>{
+      const tot=oTotal(o),bal=tot-o.paid;
+      const items=Object.entries(o.items).map(([k,v])=>{const p=P.find(x=>x.id===k);return p?p.name+'×'+v:''}).filter(Boolean).join('、');
+      const camp=C.find(c=>c.id===o.campaign);
+      const step=camp?`<span class="badge b-blue" style="font-size:10px">${camp.steps[camp.step]||'—'}</span>`:'<span class="badge b-gray" style="font-size:10px">—</span>';
+      const balS=bal>0?`<span style="color:var(--red);font-weight:600">差&nbsp;NT$&nbsp;${bal.toLocaleString()}</span>`:'<span style="color:var(--green)">結清</span>';
+      const rcpt=(o.receipt||o.ref5)?`<span style="color:var(--green);cursor:pointer;margin-left:3px" onclick="viewReceipt('${o.id}')" title="查看憑證">📎</span>`:'';
+      return `<tr>
+        <td style="width:82px;font-weight:600">${o.customerId}${rcpt}</td>
+        <td style="width:155px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text2)" title="${items}">${items}</td>
+        <td style="width:78px">NT$&nbsp;${tot.toLocaleString()}</td>
+        <td style="width:88px">${sBadge(o.status)}</td>
+        <td style="width:88px">${step}</td>
+        <td style="width:108px">${balS}</td>
+        <td style="width:44px"><button class="btn xs" onclick="openEdit('${o.id}')">編輯</button></td>
+      </tr>`;
+    }).join('')}</tbody></table></div>`;
+}
+
+function viewReceipt(id){
+  const O=getO();const o=O.find(x=>x.id===id);if(!o)return;
+  document.getElementById('proof-title').textContent=o.customerId+' 的付款憑證';
+  let html='';
+  if(o.ref5)html+=`<div style="margin-bottom:10px"><span style="font-size:12px;color:var(--text2)">匯款末五碼：</span><span style="font-size:18px;font-weight:700;letter-spacing:.1em">${o.ref5}</span></div>`;
+  if(o.receipt)html+=`<img src="${o.receipt}" style="max-width:100%;border-radius:var(--radius-sm)">`;
+  document.getElementById('proof-body').innerHTML=html||'（無資料）';
+  document.getElementById('modal-proof').classList.add('open');
+}
+
+function openEdit(id){
+  const O=getO();const o=O.find(x=>x.id===id);if(!o)return;
+  const tot=oTotal(o);
+  document.getElementById('edit-body').innerHTML=`
+    <div style="font-weight:600;margin-bottom:10px">${o.customerId}　<span style="font-size:12px;color:var(--text2);font-weight:400">${o.contact||''}</span></div>
+    <div class="form-row g3">
+      <div><label>已付金額</label><input id="e-paid" type="number" value="${o.paid}"></div>
+      <div><label>末五碼</label><input id="e-ref" value="${o.ref||''}"></div>
+      <div><label>查詢密碼</label><input id="e-pin" value="${o.pin||''}"></div>
+    </div>
+    <div class="form-row g2">
+      <div><label>聯絡方式</label><input id="e-contact" value="${o.contact||''}"></div>
+      <div><label>備註</label><input id="e-note" value="${o.note||''}"></div>
+    </div>
+    ${o.receipt?`<div style="margin-top:8px"><label>付款憑證</label><img src="${o.receipt}" style="max-width:200px;border-radius:var(--radius-sm);display:block;margin-top:4px"></div>`:''}
+    ${o.ref5?`<div style="margin-top:6px;font-size:13px;color:var(--text2)">顧客填寫末五碼：<strong>${o.ref5}</strong></div>`:''}
+    ${!o.receipt&&!o.ref5?'<div style="color:var(--text2);font-size:12px;margin-top:4px">尚未上傳付款憑證</div>':''}
+    <div style="font-size:12px;color:var(--text2);margin-top:8px">總額：NT$&nbsp;${tot.toLocaleString()}</div>`;
+  document.getElementById('save-btn').onclick=function(){
+    const O2=getO();const o2=O2.find(x=>x.id===id);if(!o2)return;
+    const paid=parseInt(document.getElementById('e-paid').value)||0;
+    const tot2=oTotal(o2);
+    o2.paid=paid;o2.ref=document.getElementById('e-ref').value.trim();
+    o2.pin=document.getElementById('e-pin').value.trim()||o2.pin;
+    o2.contact=document.getElementById('e-contact').value.trim();
+    o2.note=document.getElementById('e-note').value;
+    o2.status=paid>=tot2?'paid':paid>0?'partial':'unpaid';
+    saveO(O2);cm('modal-edit');renderOrders();renderStats();
+  };
+  document.getElementById('del-btn').onclick=function(){
+    if(!confirm('確定刪除此訂單？'))return;
+    const O2=getO();saveO(O2.filter(x=>x.id!==id));cm('modal-edit');renderOrders();renderStats();
+  };
+  document.getElementById('modal-edit').classList.add('open');
+}
+
+function openAddOrder(){
+  const C=getC(),P=getP();
+  ['mo-id','mo-ref','mo-pin','mo-contact','mo-note'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('mo-camp').innerHTML=C.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  document.getElementById('mo-items').innerHTML=P.map(p=>`
+    <div class="fbb" style="margin-bottom:5px">
+      <label style="font-size:13px;margin:0;display:flex;align-items:center;gap:6px">
+        ${p.img?`<img src="${p.img}" class="prod-img" onerror="this.style.display='none'">`:''}
+        ${p.name} <span style="color:var(--text2);font-size:12px">NT$&nbsp;${p.price}</span>
+      </label>
+      <input type="number" min="0" value="0" id="moq-${p.id}" style="width:55px" oninput="updMoTotal()">
+    </div>`).join('');
+  updMoTotal();
+  document.getElementById('modal-add').classList.add('open');
+}
+function updMoTotal(){
+  const P=getP();let t=0;
+  P.forEach(p=>{const e=document.getElementById('moq-'+p.id);if(e)t+=p.price*(parseInt(e.value)||0)});
+  document.getElementById('mo-total').textContent='NT$\u00a0'+t.toLocaleString();
+}
+function saveOrder(){
+  const cid=document.getElementById('mo-id').value.trim();if(!cid)return alert('請填入暱稱');
+  const P=getP();const items={};
+  P.forEach(p=>{const e=document.getElementById('moq-'+p.id);const q=parseInt(e?.value)||0;if(q>0)items[p.id]=q});
+  if(!Object.keys(items).length)return alert('請選擇商品');
+  const pin=document.getElementById('mo-pin').value.trim();
+  if(pin&&pin.length!==4)return alert('查詢密碼需為4位數');
+  const O=getO();
+  O.push({id:uid(),customerId:cid,pin:pin||'0000',ref:document.getElementById('mo-ref').value.trim(),
+    contact:document.getElementById('mo-contact').value.trim(),items,paid:0,
+    note:document.getElementById('mo-note').value,status:'unpaid',
+    campaign:document.getElementById('mo-camp').value,receipt:'',ref5:'',createdAt:Date.now()});
+  saveO(O);cm('modal-add');renderOrders();renderStats();
+}
+
+// ── products ──
+let EPid=null;
+function handleProdImg(dataId,input,previewId){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    document.getElementById(dataId).value=e.target.result;
+    const prev=document.getElementById(previewId);
+    if(prev){prev.src=e.target.result;prev.style.display='block'}
+  };
+  reader.readAsDataURL(file);
+}
+function renderProds(){
+  updateCatList();updateCampSel('np-camp');
+  const P=getP();
+  if(!P.length){document.getElementById('product-list').innerHTML='<div style="color:var(--text2);font-size:13px">尚無商品</div>';return}
+  document.getElementById('product-list').innerHTML=P.map(p=>`
+    <div class="fbb" style="padding:7px 0;border-bottom:1px solid var(--border)">
+      <div class="fb" style="gap:8px">
+        ${p.img?`<img src="${p.img}" class="prod-img" onerror="this.style.display='none'">`:'<div style="width:36px;height:36px;border-radius:var(--radius-sm);background:var(--bg2);flex-shrink:0;border:1px solid var(--border)"></div>'}
+        <div><div style="font-weight:600">${p.name}</div><div style="font-size:11px;color:var(--text2)">${p.cat}</div></div>
+      </div>
+      <div class="fb" style="gap:8px">
+        <span style="font-weight:600">NT$&nbsp;${p.price.toLocaleString()}</span>
+        <button class="btn xs" onclick="openEditProd('${p.id}')">編輯</button>
+      </div>
+    </div>`).join('');
+}
+function updateCatList(){
+  const CAT=ld(KEY_CAT,['周邊','文具','服飾','書籍','限定商品','其他']);
+  document.getElementById('cat-list').innerHTML=CAT.map(c=>`<option value="${c}">`).join('');
+}
+function updateCampSel(id){
+  const C=getC();const el=document.getElementById(id);if(!el)return;
+  el.innerHTML='<option value="">不指定</option>'+C.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+}
+function addProduct(){
+  const name=document.getElementById('np-name').value.trim();
+  const price=parseInt(document.getElementById('np-price').value)||0;
+  const cat=document.getElementById('np-cat').value.trim()||'其他';
+  const img=document.getElementById('np-img-data').value;
+  const camp=document.getElementById('np-camp').value;
+  if(!name||!price)return alert('請填入名稱與單價');
+  const CAT=ld(KEY_CAT,['周邊','文具','服飾','書籍','限定商品','其他']);
+  if(!CAT.includes(cat)){CAT.unshift(cat);if(CAT.length>30)CAT.pop();sv(KEY_CAT,CAT)}
+  const P=getP();P.push({id:uid(),name,price,cat,img,campaign:camp});saveP(P);
+  ['np-name','np-price','np-cat'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('np-img-data').value='';
+  document.getElementById('np-img-preview').style.display='none';
+  renderProds();
+}
+function openEditProd(id){
+  EPid=id;const P=getP();const p=P.find(x=>x.id===id);if(!p)return;
+  document.getElementById('pe-body').innerHTML=`
+    <div class="form-row g2">
+      <div><label>商品名稱</label><input id="pe-name" value="${p.name}"></div>
+      <div><label>單價（NT$）</label><input id="pe-price" type="number" value="${p.price}"></div>
+    </div>
+    <div class="form-row g2">
+      <div><label>類別</label><input id="pe-cat" list="cat-list" value="${p.cat}"></div>
+      <div><label>所屬批次</label><select id="pe-camp"></select></div>
+    </div>
+    <div>
+      <label>商品圖片</label>
+      <div class="upload-area" onclick="document.getElementById('pe-img-file').click()" style="margin-bottom:6px">
+        <input type="file" id="pe-img-file" accept="image/*" onchange="handleProdImg('pe-img-data',this,'pe-img-preview')">
+        <div style="font-size:12px;color:var(--text2)">📷 點此更換圖片</div>
+      </div>
+      <input type="hidden" id="pe-img-data" value="${p.img||''}">
+      ${p.img?`<img id="pe-img-preview" src="${p.img}" style="max-width:120px;border-radius:var(--radius-sm);display:block">`:`<img id="pe-img-preview" style="max-width:120px;border-radius:var(--radius-sm);display:none">`}
+    </div>`;
+  setTimeout(()=>{updateCampSel('pe-camp');const s=document.getElementById('pe-camp');if(s)s.value=p.campaign||''},0);
+  document.getElementById('modal-prod-edit').classList.add('open');
+}
+function saveProd(){
+  const P=getP();const p=P.find(x=>x.id===EPid);if(!p)return;
+  const name=document.getElementById('pe-name').value.trim();
+  const price=parseInt(document.getElementById('pe-price').value)||0;
+  const cat=document.getElementById('pe-cat').value.trim()||'其他';
+  if(!name||!price)return alert('請填入名稱與單價');
+  const CAT=ld(KEY_CAT,[]);if(!CAT.includes(cat)){CAT.unshift(cat);if(CAT.length>30)CAT.pop();sv(KEY_CAT,CAT)}
+  p.name=name;p.price=price;p.cat=cat;
+  const newImg=document.getElementById('pe-img-data').value;
+  if(newImg)p.img=newImg;
+  p.campaign=document.getElementById('pe-camp').value;
+  saveP(P);cm('modal-prod-edit');renderProds();
+}
+function delProd(){
+  if(!confirm('確定刪除商品？'))return;
+  const P=getP();saveP(P.filter(x=>x.id!==EPid));cm('modal-prod-edit');renderProds();
+}
+
+// ── campaigns ──
+function campOrderStats(campId){
+  // returns { prodId: { qty, people } }
+  const O=getO();
+  const campOrders=O.filter(o=>o.campaign===campId);
+  const stats={};
+  campOrders.forEach(o=>{
+    Object.entries(o.items).forEach(([pid,qty])=>{
+      if(!stats[pid])stats[pid]={qty:0,people:0};
+      stats[pid].qty+=qty;
+      stats[pid].people+=1;
+    });
+  });
+  return {stats,total:campOrders.length};
+}
+
+function renderCamps(){
+  const C=getC(),P=getP();
+  const sorted=[...C].sort((a,b)=>a.done===b.done?0:a.done?1:-1);
+  if(!sorted.length){document.getElementById('campaign-list').innerHTML='<div style="color:var(--text2);font-size:13px;margin-bottom:12px">尚無批次</div>';return}
+  document.getElementById('campaign-list').innerHTML=sorted.map(c=>{
+    const {stats,total}=campOrderStats(c.id);
+    const statsRows=Object.entries(stats).map(([pid,s])=>{
+      const p=P.find(x=>x.id===pid);if(!p)return'';
+      return `<div class="stat-row">
+        <span class="prod-name">${p.name}</span>
+        <span><span class="prod-count">${s.qty} 件</span><span class="prod-ppl">/ ${s.people} 人</span></span>
+      </div>`;
+    }).join('');
+    return `<div class="card" style="${c.done?'opacity:.65':''}">
+      <div class="fbb" style="margin-bottom:6px">
+        <div class="fb" style="gap:8px">
+          <span style="font-weight:600">${c.name}</span>
+          ${c.done?'<span class="badge b-done">已完成</span>':''}
+        </div>
+        <div class="fb" style="gap:5px">
+          <button class="btn xs" onclick="openEditCamp('${c.id}')">編輯</button>
+          <button class="btn xs danger" onclick="delCamp('${c.id}')">刪除</button>
+        </div>
+      </div>
+      ${c.deadline?`<div class="notice" style="margin-bottom:8px;font-size:11px;padding:6px 10px">${c.deadline}</div>`:''}
+      <div class="prog-steps">${c.steps.map((s,i)=>{
+        const done=i<c.step,active=i===c.step,last=i===c.steps.length-1,isP=i===PROOF_IDX;
+        return `<div class="step">
+          ${!last?`<div class="step-line"></div>`:''}
+          <div class="step-dot ${done?'sd-done':active?'sd-active':'sd-todo'}">${done?'✓':i+1}</div>
+          <div class="step-lbl ${active?'active':''}">${s}</div>
+          ${isP?`<div class="proof-area ${c.proof?'has':''}" style="margin-top:4px">
+            <div style="margin-bottom:3px">${c.proof?'✓ 購買證明':'購買證明'}</div>
+            <div class="upload-area" onclick="document.getElementById('proof-file-${c.id}').click()" style="padding:5px;margin-bottom:4px">
+              <input type="file" id="proof-file-${c.id}" accept="image/*" onchange="handleProofUpload('${c.id}',this)">
+              <div style="font-size:11px;color:var(--text2)">📷 上傳圖片</div>
+            </div>
+            ${c.proof?`<img src="${c.proof}" style="max-width:100%;border-radius:3px;display:block;cursor:pointer" onclick="openProofImg('${c.id}')">`:''}
+          </div>`:''}
+        </div>`;
+      }).join('')}</div>
+      <div class="fb" style="margin-top:10px;gap:6px">
+        <button class="btn xs" onclick="moveStep('${c.id}',-1)">← 退回</button>
+        <button class="btn xs primary" onclick="moveStep('${c.id}',1)">推進 →</button>
+      </div>
+      <!-- 下單統計 -->
+      <div class="order-stats">
+        <div class="order-stats-title">下單統計　<span style="font-weight:400;color:var(--text2)">共 ${total} 筆訂單</span></div>
+        ${statsRows||'<div style="font-size:12px;color:var(--text3)">尚無訂單</div>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function handleProofUpload(campId,input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const C=getC();const c=C.find(x=>x.id===campId);if(!c)return;
+    c.proof=e.target.result;saveC(C);renderCamps();
+  };
+  reader.readAsDataURL(file);
+}
+function openProofImg(campId){
+  const C=getC();const c=C.find(x=>x.id===campId);if(!c||!c.proof)return;
+  document.getElementById('proof-title').textContent='購買證明';
+  document.getElementById('proof-body').innerHTML=`<img src="${c.proof}" style="max-width:100%;border-radius:var(--radius-sm)">`;
+  document.getElementById('modal-proof').classList.add('open');
+}
+function moveStep(id,d){
+  const C=getC();const c=C.find(x=>x.id===id);if(!c)return;
+  c.step=Math.max(0,Math.min(c.steps.length-1,c.step+d));
+  c.done=(c.step===c.steps.length-1);saveC(C);renderCamps();
+}
+function delCamp(id){if(!confirm('確定刪除？'))return;const C=getC();saveC(C.filter(c=>c.id!==id));renderCamps()}
+
+let ECid=null;
+function openEditCamp(id){
+  ECid=id;const C=getC();const c=C.find(x=>x.id===id);if(!c)return;
+  document.getElementById('ce-body').innerHTML=`
+    <div style="margin-bottom:8px"><label>批次名稱</label><input id="ce-name" value="${c.name}"></div>
+    <div style="margin-bottom:8px"><label>截止說明 <button class="copy-tip" onclick="copyArrow()">→ 複製箭頭</button></label>
+      <input id="ce-deadline" value="${c.deadline||''}" placeholder="5/28 12:00 喊單截止 → 5/28 23:59 訂金截止"></div>
+    <div><label>注意事項（顯示於下單頁）</label>
+      <textarea id="ce-notice" rows="3" style="margin-top:3px">${c.notice||''}</textarea></div>`;
+  document.getElementById('modal-camp-edit').classList.add('open');
+}
+function saveCampEdit(){
+  const C=getC();const c=C.find(x=>x.id===ECid);if(!c)return;
+  c.name=document.getElementById('ce-name').value.trim()||c.name;
+  c.deadline=document.getElementById('ce-deadline').value.trim();
+  c.notice=document.getElementById('ce-notice').value.trim();
+  saveC(C);cm('modal-camp-edit');renderCamps();
+}
+function delCampEdit(){
+  if(!confirm('確定刪除此批次？'))return;
+  const C=getC();saveC(C.filter(x=>x.id!==ECid));cm('modal-camp-edit');renderCamps();
+}
+function addCampaign(){
+  const name=document.getElementById('nc-name').value.trim();if(!name)return alert('請填入批次名稱');
+  const C=getC();
+  C.push({id:uid(),name,step:0,done:false,steps:[...DSTEPS],proof:'',
+    deadline:document.getElementById('nc-deadline').value.trim(),
+    notice:document.getElementById('nc-notice').value.trim()});
+  saveC(C);['nc-name','nc-deadline','nc-notice'].forEach(x=>document.getElementById(x).value='');
+  renderCamps();
+}
+function copyArrow(){
+  navigator.clipboard?.writeText('→').catch(()=>{});
+  document.querySelectorAll('.copy-tip').forEach(el=>{el.textContent='已複製！';setTimeout(()=>el.textContent='→ 複製箭頭',1500)});
+}
+
+// ── calc ──
+function loadRate(){
+  const R=ld(KEY_R,{JPY:0.22,KRW:0.024,CNY:4.4,USD:32});
+  const cur=document.getElementById('c-cur').value;
+  document.getElementById('c-rate').value=R[cur]||'';doCalc();
+}
+function saveRate(){
+  const R=ld(KEY_R,{JPY:0.22,KRW:0.024,CNY:4.4,USD:32});
+  const cur=document.getElementById('c-cur').value;
+  const r=parseFloat(document.getElementById('c-rate').value);
+  if(r>0){R[cur]=r;sv(KEY_R,R)}
+}
+function doCalc(){
+  const orig=parseFloat(document.getElementById('c-price').value)||0;
+  const rate=parseFloat(document.getElementById('c-rate').value)||0;
+  const ship=parseFloat(document.getElementById('c-ship').value)||0;
+  const fee=parseFloat(document.getElementById('c-fee').value)||0;
+  const tax=parseFloat(document.getElementById('c-tax').value)||0;
+  const roundTo=parseInt(document.getElementById('c-round').value)||1;
+  if(!orig||!rate){document.getElementById('calc-out').textContent='輸入數值後顯示結果';return}
+  const base=orig*rate,taxA=base*(tax/100),sub=base+taxA+ship,feeA=sub*(fee/100),tot=sub+feeA;
+  const rounded=Math.ceil(tot/roundTo)*roundTo;
+  document.getElementById('calc-out').innerHTML=`<div style="display:grid;grid-template-columns:auto 1fr;gap:4px 16px;align-items:baseline">
+    <span style="color:var(--text2)">換算台幣</span><span>NT$&nbsp;${Math.round(base).toLocaleString()}</span>
+    ${tax?`<span style="color:var(--text2)">關稅（${tax}%）</span><span>NT$&nbsp;${Math.round(taxA).toLocaleString()}</span>`:''}
+    ${ship?`<span style="color:var(--text2)">運費分攤</span><span>NT$&nbsp;${Math.round(ship).toLocaleString()}</span>`:''}
+    ${fee?`<span style="color:var(--text2)">服務費（${fee}%）</span><span>NT$&nbsp;${Math.round(feeA).toLocaleString()}</span>`:''}
+    <span style="color:var(--text2)">小計</span><span>NT$&nbsp;${Math.round(tot).toLocaleString()}</span>
+    <span style="font-size:15px;font-weight:600">建議售價</span><span style="font-size:22px;font-weight:700">NT$&nbsp;${rounded.toLocaleString()}</span>
+  </div>`;
+}
+
+// ── settings ──
+function loadSettings(){
+  const S=getS();
+  document.getElementById('acct-bank').value=S.bank||'';
+  document.getElementById('acct-num').value=S.num||'';
+  document.getElementById('acct-note').value=S.note||'';
+  document.getElementById('dep-pct').value=S.depositPct||50;
+  document.getElementById('dep-note').value=S.depositNote||'';
+  document.getElementById('new-pw').value='';
+  document.getElementById('new-pw2').value='';
+  if(S.img){
+    const prev=document.getElementById('acct-img-preview');
+    if(prev){prev.src=S.img;prev.style.display='block'}
+    document.getElementById('acct-img-data').value=S.img;
+  }
+}
+function saveSettings(){
+  const S=getS();
+  const newPw=document.getElementById('new-pw').value;
+  const newPw2=document.getElementById('new-pw2').value;
+  if(newPw){
+    if(newPw!==newPw2)return alert('兩次密碼不一致');
+    if(newPw.length<4)return alert('密碼至少4位');
+    S.pw=newPw;
+  }
+  S.bank=document.getElementById('acct-bank').value.trim();
+  S.num=document.getElementById('acct-num').value.trim();
+  S.note=document.getElementById('acct-note').value.trim();
+  S.depositPct=parseInt(document.getElementById('dep-pct').value)||50;
+  S.depositNote=document.getElementById('dep-note').value.trim();
+  const imgData=document.getElementById('acct-img-data').value;
+  if(imgData)S.img=imgData;
+  sv(KEY_S,S);
+  const m=document.getElementById('saved-msg');m.style.display='inline';setTimeout(()=>m.style.display='none',2000);
+}
+</script>
+</body>
+</html>

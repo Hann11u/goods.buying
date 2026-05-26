@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>代購下單 / 訂單查詢</title>
+<style>
+:root{
+  --bg:#faf8f5;--bg2:#f2efe9;--bg3:#e8e4dc;
+  --text:#2c2825;--text2:#6b6560;--text3:#9b958e;
+  --border:#ddd8d0;--border2:#ccc7be;
+  --accent:#3d3530;--accent-fg:#faf8f5;
+  --green:#2d6b4f;--green-bg:#e8f4ed;--green-border:#8ecaaa;
+  --red:#8b2020;--red-bg:#faeaea;--red-border:#e0a0a0;
+  --amber:#7a4a10;--amber-bg:#fdf0dc;--amber-border:#e8c07a;
+  --blue:#1a4d7a;--blue-bg:#e8f1fa;--blue-border:#90b8e0;
+  --radius:10px;--radius-sm:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans TC',sans-serif;font-size:14px;color:var(--text);background:var(--bg);min-height:100vh}
+.wrap{max-width:680px;margin:0 auto;padding:1.5rem 1rem}
+.site-header{text-align:center;margin-bottom:2rem}
+.site-header h1{font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px}
+.site-header p{font-size:12px;color:var(--text2)}
+
+/* tabs */
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:1.5rem}
+.tab{flex:1;padding:11px 0;cursor:pointer;font-size:14px;color:var(--text2);border-bottom:2px solid transparent;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none;text-align:center;font-family:inherit}
+.tab.active{color:var(--text);border-bottom-color:var(--accent);font-weight:600}
+.tab:hover:not(.active){color:var(--text)}
+.panel{display:none}.panel.active{display:block}
+
+/* cards */
+.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:12px}
+
+/* form */
+label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px;font-weight:500}
+input,select,textarea{width:100%;padding:8px 11px;font-size:14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-family:inherit;-webkit-appearance:none}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+.form-row{display:grid;gap:10px;margin-bottom:10px}
+.g2{grid-template-columns:1fr 1fr}
+
+/* buttons */
+.btn{padding:9px 18px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer;font-size:14px;font-weight:500;font-family:inherit;transition:background .12s;-webkit-tap-highlight-color:transparent}
+.btn:hover{background:var(--bg2)}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}.btn.primary:hover{opacity:.88}
+.btn.success{color:var(--green);border-color:var(--green-border)}.btn.success:hover{background:var(--green-bg)}
+.btn.sm{padding:6px 13px;font-size:13px}.btn.xs{padding:4px 9px;font-size:12px}
+.btn-full{width:100%;text-align:center}
+
+/* notice */
+.notice{background:var(--bg2);border-radius:var(--radius-sm);border:1px solid var(--border);padding:10px 14px;font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.7}
+.notice.warn{background:var(--amber-bg);border-color:var(--amber-border);color:var(--amber)}
+
+/* misc */
+.sep{height:1px;background:var(--border);margin:14px 0}
+.fb{display:flex;align-items:center;gap:8px}.fbb{display:flex;align-items:center;justify-content:space-between}
+.sec-title{font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em}
+.prod-img{width:44px;height:44px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border);flex-shrink:0}
+
+/* badges */
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
+.b-paid{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.b-partial{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)}
+.b-unpaid{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+
+/* progress */
+.prog-steps{display:flex;align-items:flex-start;margin:10px 0}
+.step{flex:1;text-align:center;position:relative;min-width:0}
+.step-line{position:absolute;top:11px;left:calc(50% + 12px);right:calc(-50% + 12px);height:1px;background:var(--border)}
+.step-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;font-size:10px;font-weight:600}
+.sd-done{background:var(--green);color:#fff}.sd-active{background:var(--accent);color:var(--accent-fg)}.sd-todo{background:var(--bg2);color:var(--text2);border:1px solid var(--border)}
+.step-lbl{font-size:10px;color:var(--text2);line-height:1.3}.step-lbl.active{color:var(--text);font-weight:600}
+.proof-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:11px;margin-top:5px;cursor:pointer;border:1px solid var(--green-border);background:var(--green-bg);color:var(--green)}
+.proof-empty{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;margin-top:5px;border:1px dashed var(--border2);background:var(--bg2);color:var(--text3)}
+
+/* confirm */
+.confirm-item{display:flex;align-items:baseline;gap:12px;padding:7px 0;border-bottom:1px solid var(--border)}
+.confirm-item:last-child{border-bottom:none}
+.confirm-label{font-size:12px;color:var(--text2);min-width:72px;flex-shrink:0}
+.confirm-val{font-weight:600;font-size:14px;line-height:1.5}
+
+/* success hint */
+.success-hint{background:#f5f2ec;border:1px solid var(--border2);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px}
+.success-hint-row{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:4px}
+.success-hint-row:last-child{margin-bottom:0}
+.success-hint-row .icon{flex-shrink:0;font-size:14px}
+
+/* receipt tabs */
+.rcpt-tabs{display:flex;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:10px}
+.rcpt-tab{flex:1;padding:8px;text-align:center;font-size:13px;cursor:pointer;background:var(--bg2);color:var(--text2);border:none;font-family:inherit;transition:background .12s}
+.rcpt-tab.active{background:var(--accent);color:var(--accent-fg);font-weight:500}
+
+/* acct box */
+.acct-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;margin-top:4px}
+
+/* price rows */
+.price-row{display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px}
+.price-row.total{font-weight:700;border-top:1px solid var(--border);padding-top:7px;margin-top:5px}
+
+/* modal */
+.overlay{display:none;position:fixed;inset:0;background:rgba(44,40,37,.55);z-index:200;align-items:center;justify-content:center;padding:1rem}
+.overlay.open{display:flex}
+.modal{background:var(--bg);border-radius:var(--radius);padding:1.5rem;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.15)}
+.modal-title{font-size:15px;font-weight:600;margin-bottom:1rem}
+
+/* file upload */
+.upload-area{border:1px dashed var(--border2);border-radius:var(--radius-sm);padding:16px;text-align:center;cursor:pointer;background:var(--bg2);transition:background .12s}
+.upload-area:hover{background:var(--bg3)}
+.upload-area input[type=file]{display:none}
+.upload-area .upload-label{font-size:13px;color:var(--text2);cursor:pointer;display:block}
+.upload-area .upload-hint{font-size:11px;color:var(--text3);margin-top:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="site-header">
+    <h1 id="site-title">代購下單 / 訂單查詢</h1>
+    <p id="site-sub"></p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="gotoTab('order')">下單</button>
+    <button class="tab" onclick="gotoTab('query')">訂單查詢</button>
+  </div>
+
+  <!-- ORDER -->
+  <div class="panel active" id="panel-order">
+    <div id="order-s1">
+      <div style="font-size:15px;font-weight:600;margin-bottom:14px">選擇要下單的批次</div>
+      <div id="camp-cards"></div>
+    </div>
+    <div id="order-s2" style="display:none">
+      <div class="fb" style="margin-bottom:14px">
+        <button class="btn xs" onclick="backToS1()">← 返回</button>
+        <span style="font-size:15px;font-weight:600" id="order-camp-title"></span>
+      </div>
+      <div id="order-notice-box"></div>
+      <div class="sec-title">選擇商品</div>
+      <div id="order-prod-list" style="margin-bottom:14px"></div>
+      <div class="sep"></div>
+      <div class="form-row g2">
+        <div><label>暱稱 / ID</label><input id="o-nick" placeholder="您的暱稱" autocomplete="off"></div>
+        <div><label>查詢密碼（4位數字，請記住）</label><input id="o-pin" type="password" maxlength="4" placeholder="自設4位數" inputmode="numeric"></div>
+      </div>
+      <div class="form-row" style="margin-bottom:14px">
+        <label>聯絡方式（FB / Line / Plurk 等，方便後續開設賣場通知）</label>
+        <input id="o-contact" placeholder="e.g. FB: @yourname">
+      </div>
+      <div class="sep"></div>
+      <div id="order-summary" style="margin-bottom:14px"></div>
+      <button class="btn primary btn-full" onclick="submitOrder()">確認下單</button>
+    </div>
+    <div id="order-s3" style="display:none">
+      <div class="card">
+        <div style="text-align:center;margin-bottom:16px">
+          <div style="font-size:28px;margin-bottom:8px">✓</div>
+          <div style="font-size:17px;font-weight:700">下單成功！</div>
+        </div>
+
+        <div class="sec-title">訂單資訊</div>
+        <div id="confirm-rows" style="margin-bottom:8px"></div>
+
+        <div class="sep"></div>
+        <div class="sec-title">付款帳號</div>
+        <div id="acct-display" class="acct-box"></div>
+
+        <div class="sep"></div>
+        <!-- 截圖提示 + 憑證提醒 -->
+        <div class="success-hint">
+          <div class="success-hint-row">
+            <span class="icon">📸</span>
+            <span>建議截圖此頁面保存訂單資訊</span>
+          </div>
+          <div class="success-hint-row">
+            <span class="icon">💳</span>
+            <span>完成匯款後請至「訂單查詢」上傳<strong>付款憑證</strong></span>
+          </div>
+        </div>
+
+        <button class="btn sm btn-full" onclick="gotoTab('query')" style="text-align:center">前往訂單查詢 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUERY -->
+  <div class="panel" id="panel-query">
+    <div id="query-login">
+      <div class="notice">輸入下單時填寫的暱稱與查詢密碼</div>
+      <div class="form-row g2">
+        <div><label>暱稱 / ID</label><input id="q-nick" placeholder="您的暱稱" autocomplete="off"></div>
+        <div><label>查詢密碼（4位數）</label><input id="q-pin" type="password" maxlength="4" placeholder="****" inputmode="numeric"
+          onkeydown="if(event.key==='Enter')doQuery()"></div>
+      </div>
+      <button class="btn primary sm" onclick="doQuery()">查詢訂單</button>
+      <div id="q-err" style="color:var(--red);font-size:12px;margin-top:8px;display:none">暱稱或密碼不正確，請再試一次。</div>
+    </div>
+    <div id="query-result" style="display:none"></div>
+  </div>
+</div>
+
+<!-- proof modal -->
+<div class="overlay" id="modal-proof">
+  <div class="modal">
+    <div class="fbb" style="margin-bottom:12px">
+      <div class="modal-title" id="proof-title">購買證明</div>
+      <button class="btn xs" onclick="document.getElementById('modal-proof').classList.remove('open')">✕</button>
+    </div>
+    <div id="proof-body"></div>
+  </div>
+</div>
+
+<script>
+// ── shared storage key (同 admin.html 相同 key) ──
+const KEY_O='dg_orders', KEY_P='dg_products', KEY_C='dg_campaigns', KEY_S='dg_settings';
+
+function ld(k,d){try{const v=localStorage.getItem(k);return v!==null?JSON.parse(v):d}catch{return d}}
+function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
+function uid(){return '_'+Math.random().toString(36).slice(2,8)}
+
+function getO(){return ld(KEY_O,[])}
+function getP(){return ld(KEY_P,[])}
+function getC(){return ld(KEY_C,[])}
+function getS(){return ld(KEY_S,{bank:'',num:'',note:'',img:'',depositPct:50,depositNote:'訂金五成，餘款到貨後付清'})}
+function saveO(v){sv(KEY_O,v)}
+
+const PROOF_IDX=2;
+
+function oTotal(o,P){return Object.entries(o.items).reduce((s,[k,v])=>{const p=P.find(x=>x.id===k);return s+(p?p.price*v:0)},0)}
+
+function gotoTab(t){
+  ['order','query'].forEach(x=>document.getElementById('panel-'+x).classList.toggle('active',x===t));
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',['order','query'][i]===t));
+  if(t==='query'){document.getElementById('query-login').style.display='';document.getElementById('query-result').style.display='none';document.getElementById('q-err').style.display='none'}
+  if(t==='order')renderS1();
+}
+
+// ── ORDER FLOW ──
+let selCamp=null;
+function renderS1(){
+  ['order-s1','order-s2','order-s3'].forEach((x,i)=>document.getElementById(x).style.display=i===0?'':'none');
+  const C=getC();
+  const active=C.filter(c=>!c.done);
+  const S=getS();
+  // update site title if set
+  document.getElementById('site-sub').textContent=S.shopName||'';
+
+  document.getElementById('camp-cards').innerHTML=active.length?active.map(c=>`
+    <div class="card" style="cursor:pointer" onclick="selectCamp('${c.id}')">
+      <div style="font-weight:600;margin-bottom:4px;font-size:15px">${c.name}</div>
+      ${c.deadline?`<div style="font-size:13px;color:var(--text2);margin-bottom:4px">${c.deadline}</div>`:''}
+      ${c.notice?`<div class="notice warn" style="margin-top:8px;margin-bottom:0;padding:8px 12px;font-size:13px">${c.notice}</div>`:''}
+      <div style="font-size:13px;color:var(--blue);margin-top:12px;font-weight:500">點此下單 →</div>
+    </div>`).join(''):'<div class="notice">目前沒有開放下單的批次，請稍後再查看。</div>';
+}
+
+function selectCamp(id){
+  const C=getC(),P=getP(),S=getS();
+  selCamp=C.find(c=>c.id===id);if(!selCamp)return;
+  document.getElementById('order-s1').style.display='none';
+  document.getElementById('order-s2').style.display='';
+  document.getElementById('order-camp-title').textContent=selCamp.name;
+  document.getElementById('order-notice-box').innerHTML=
+    (selCamp.deadline||selCamp.notice)?`<div class="notice${selCamp.notice?' warn':''}" style="font-size:13px">${[selCamp.deadline,selCamp.notice].filter(Boolean).join('<br>')}</div>`:'';
+  const prods=P.filter(p=>!p.campaign||p.campaign===selCamp.id);
+  document.getElementById('order-prod-list').innerHTML=prods.length?prods.map(p=>`
+    <div class="fbb" style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">
+      <div class="fb" style="gap:12px">
+        ${p.img?`<img src="${p.img}" class="prod-img" onerror="this.style.display='none'">`:''}
+        <div>
+          <div style="font-weight:600;font-size:14px">${p.name}</div>
+          <div style="font-size:13px;color:var(--text2);margin-top:2px">NT$&nbsp;${p.price.toLocaleString()} ／ ${p.cat}</div>
+        </div>
+      </div>
+      <input type="number" min="0" value="0" id="oq-${p.id}" style="width:58px;text-align:center" oninput="updSummary()">
+    </div>`).join(''):'<div style="color:var(--text2);font-size:13px">此批次尚未設定商品</div>';
+  ['o-nick','o-pin','o-contact'].forEach(x=>document.getElementById(x).value='');
+  updSummary();
+}
+function backToS1(){renderS1()}
+
+function updSummary(){
+  if(!selCamp)return;
+  const P=getP(),S=getS();
+  const prods=P.filter(p=>!p.campaign||p.campaign===selCamp.id);
+  let total=0;const lines=[];
+  prods.forEach(p=>{const e=document.getElementById('oq-'+p.id);const q=parseInt(e?.value)||0;if(q>0){total+=p.price*q;lines.push(`${p.name} ×${q}　NT$&nbsp;${(p.price*q).toLocaleString()}`)}});
+  const dep=Math.ceil(total*S.depositPct/100);
+  document.getElementById('order-summary').innerHTML=total?`
+    <div class="sec-title">訂單摘要</div>
+    <div style="font-size:13px;line-height:2;margin-bottom:6px">${lines.join('<br>')}</div>
+    <div class="sep"></div>
+    <div class="price-row total"><span>合計</span><span>NT$&nbsp;${total.toLocaleString()}</span></div>
+    <div class="price-row" style="margin-top:4px"><span style="color:var(--text2)">訂金（${S.depositPct}%）</span>
+      <span style="font-weight:700;color:var(--amber);font-size:17px">NT$&nbsp;${dep.toLocaleString()}</span></div>
+    ${S.depositNote?`<div style="font-size:12px;color:var(--text2);margin-top:5px">${S.depositNote}</div>`:''}
+  `:'<div style="font-size:13px;color:var(--text2)">請選擇商品</div>';
+}
+
+function submitOrder(){
+  const nick=document.getElementById('o-nick').value.trim();
+  const pin=document.getElementById('o-pin').value.trim();
+  const contact=document.getElementById('o-contact').value.trim();
+  if(!nick)return alert('請填入暱稱');
+  if(pin.length!==4||!/^\d{4}$/.test(pin))return alert('查詢密碼請填4位數字');
+  if(!contact)return alert('請填入聯絡方式');
+  if(!selCamp)return;
+  const P=getP(),S=getS();
+  const prods=P.filter(p=>!p.campaign||p.campaign===selCamp.id);
+  const items={};prods.forEach(p=>{const e=document.getElementById('oq-'+p.id);const q=parseInt(e?.value)||0;if(q>0)items[p.id]=q});
+  if(!Object.keys(items).length)return alert('請至少選擇一件商品');
+  const total=Object.entries(items).reduce((s,[k,v])=>{const p=P.find(x=>x.id===k);return s+(p?p.price*v:0)},0);
+  const dep=Math.ceil(total*S.depositPct/100);
+  const itemLines=Object.entries(items).map(([k,v])=>{const p=P.find(x=>x.id===k);return p?`${p.name} ×${v}　NT$&nbsp;${(p.price*v).toLocaleString()}`:''}).filter(Boolean).join('<br>');
+  const O=getO();
+  O.push({id:uid(),customerId:nick,pin,ref:'',contact,items,paid:0,note:'',status:'unpaid',campaign:selCamp.id,receipt:'',ref5:'',createdAt:Date.now()});
+  saveO(O);
+  document.getElementById('order-s2').style.display='none';
+  document.getElementById('order-s3').style.display='';
+  document.getElementById('confirm-rows').innerHTML=`
+    <div class="confirm-item"><span class="confirm-label">批次</span><span class="confirm-val">${selCamp.name}</span></div>
+    <div class="confirm-item"><span class="confirm-label">暱稱</span><span class="confirm-val">${nick}</span></div>
+    <div class="confirm-item"><span class="confirm-label">查詢密碼</span><span class="confirm-val" style="letter-spacing:.2em;font-size:22px;color:var(--accent)">${pin}</span></div>
+    <div class="confirm-item"><span class="confirm-label">商品</span><span class="confirm-val" style="font-size:13px">${itemLines}</span></div>
+    <div class="confirm-item"><span class="confirm-label">合計</span><span class="confirm-val">NT$&nbsp;${total.toLocaleString()}</span></div>
+    <div class="confirm-item"><span class="confirm-label">訂金</span><span class="confirm-val" style="color:var(--amber);font-size:21px">NT$&nbsp;${dep.toLocaleString()}</span></div>
+    ${S.depositNote?`<div style="font-size:11px;color:var(--text2);padding:5px 0">${S.depositNote}</div>`:''}`;
+  document.getElementById('acct-display').innerHTML=(S.bank||S.num)?`
+    ${S.bank?`<div style="font-size:12px;color:var(--text2);margin-bottom:3px">收款帳號</div><div style="font-weight:700;font-size:15px">${S.bank}</div>`:''}
+    ${S.num?`<div style="font-size:20px;font-weight:700;letter-spacing:.09em;margin:6px 0">${S.num}</div>`:''}
+    ${S.note?`<div style="font-size:13px;color:var(--text2);white-space:pre-line;margin-top:5px">${S.note}</div>`:''}
+    ${S.img?`<img src="${S.img}" style="max-width:180px;border-radius:var(--radius-sm);margin-top:12px;display:block" onerror="this.style.display='none'">`:''}
+  `:'<div style="font-size:13px;color:var(--text2)">賣家尚未設定收款帳號，請聯繫賣家確認。</div>';
+}
+
+// ── QUERY ──
+function doQuery(){
+  const nick=document.getElementById('q-nick').value.trim();
+  const pin=document.getElementById('q-pin').value.trim();
+  document.getElementById('q-err').style.display='none';
+  const O=getO(),P=getP(),C=getC(),S=getS();
+  const list=O.filter(o=>o.customerId===nick&&o.pin===pin);
+  if(!list.length){document.getElementById('q-err').style.display='';return}
+  document.getElementById('query-login').style.display='none';
+  document.getElementById('query-result').style.display='';
+  document.getElementById('query-result').innerHTML=`
+    <div style="margin-bottom:12px">
+      <button class="btn xs" onclick="resetQuery()">← 重新查詢</button>
+    </div>`+list.map(o=>{
+    const tot=oTotal(o,P),bal=tot-o.paid;
+    const camp=C.find(c=>c.id===o.campaign);
+    const itemsH=Object.entries(o.items).map(([k,v])=>{const p=P.find(x=>x.id===k);return p?`<div class="price-row"><span>${p.name} ×${v}</span><span>NT$&nbsp;${(p.price*v).toLocaleString()}</span></div>`:''}).join('');
+    const progH=camp?`<div class="sep"></div>
+      <div class="sec-title">目前進度</div>
+      <div class="prog-steps">${camp.steps.map((s,i)=>{
+        const done=i<camp.step,active=i===camp.step,last=i===camp.steps.length-1,isP=i===PROOF_IDX;
+        return `<div class="step">
+          ${!last?`<div class="step-line"></div>`:''}
+          <div class="step-dot ${done?'sd-done':active?'sd-active':'sd-todo'}">${done?'✓':i+1}</div>
+          <div class="step-lbl ${active?'active':''}">${s}</div>
+          ${isP?(camp.proof
+            ?`<div class="proof-chip" onclick="showProof('${camp.proof}')">✓ 查看購買證明</div>`
+            :`<div class="proof-empty">尚未上傳</div>`):''}
+        </div>`;
+      }).join('')}</div>
+      ${camp.deadline?`<div class="notice" style="margin-top:10px;font-size:12px;padding:7px 12px">${camp.deadline}</div>`:''}
+    `:'';
+    const hasRcpt=o.receipt||o.ref5;
+    return `<div class="card">
+      ${camp?`<div style="font-size:12px;color:var(--text2);margin-bottom:10px;font-weight:500">📦 ${camp.name}</div>`:''}
+      ${itemsH}
+      <div class="price-row total"><span>合計</span><span>NT$&nbsp;${tot.toLocaleString()}</span></div>
+      <div class="price-row" style="margin-top:4px"><span style="color:var(--text2)">已付訂金</span><span>NT$&nbsp;${o.paid.toLocaleString()}</span></div>
+      <div class="price-row"><span style="color:var(--text2)">尾款</span>
+        <span style="font-weight:700;color:${bal>0?'var(--red)':'var(--green)'}">NT$&nbsp;${bal.toLocaleString()}</span></div>
+      ${S.depositNote?`<div style="font-size:12px;color:var(--text2);margin-top:4px">${S.depositNote}</div>`:''}
+      ${progH}
+      <div class="sep"></div>
+      <div class="sec-title">付款憑證</div>
+      ${hasRcpt?`<div style="font-size:12px;color:var(--green);margin-bottom:10px">✓ 已上傳，如需更新請重新填寫</div>`:'<div style="font-size:12px;color:var(--text2);margin-bottom:10px">完成匯款後請上傳憑證或填入末五碼</div>'}
+      <div class="rcpt-tabs">
+        <button class="rcpt-tab active" id="rt-img-${o.id}" onclick="switchRcptTab('${o.id}','img')">上傳圖片</button>
+        <button class="rcpt-tab" id="rt-ref-${o.id}" onclick="switchRcptTab('${o.id}','ref')">填入末五碼</button>
+      </div>
+      <div id="rcpt-img-${o.id}">
+        <div class="upload-area" onclick="document.getElementById('fi-${o.id}').click()">
+          <input type="file" id="fi-${o.id}" accept="image/*" onchange="handleImgUpload('${o.id}',this)">
+          <label class="upload-label">📷 點此選擇圖片（支援手機相機）</label>
+          <div class="upload-hint">JPG / PNG / HEIC 均可</div>
+        </div>
+        <div id="img-preview-${o.id}" style="margin-top:8px"></div>
+        ${o.receipt?`<div style="font-size:12px;color:var(--green);margin-top:6px">✓ 已有上傳記錄</div>`:''}
+      </div>
+      <div id="rcpt-ref-${o.id}" style="display:none">
+        <div class="fb" style="gap:8px">
+          <input id="rr-${o.id}" placeholder="匯款末五碼" maxlength="5" style="flex:1;letter-spacing:.12em;font-size:16px;text-align:center" inputmode="numeric" value="${o.ref5||''}">
+          <button class="btn sm success" onclick="upRef('${o.id}')">確認</button>
+        </div>
+        ${o.ref5?`<div style="margin-top:8px;font-size:13px;color:var(--green)">✓ 已填入：<strong style="letter-spacing:.12em">${o.ref5}</strong></div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function resetQuery(){
+  document.getElementById('query-login').style.display='';
+  document.getElementById('query-result').style.display='none';
+  document.getElementById('q-err').style.display='none';
+  document.getElementById('q-nick').value='';
+  document.getElementById('q-pin').value='';
+}
+
+function switchRcptTab(id,type){
+  document.getElementById('rcpt-img-'+id).style.display=type==='img'?'':'none';
+  document.getElementById('rcpt-ref-'+id).style.display=type==='ref'?'':'none';
+  document.getElementById('rt-img-'+id).classList.toggle('active',type==='img');
+  document.getElementById('rt-ref-'+id).classList.toggle('active',type==='ref');
+}
+
+function handleImgUpload(id,input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const data=e.target.result;
+    const O=getO();const o=O.find(x=>x.id===id);if(!o)return;
+    o.receipt=data;saveO(O);
+    document.getElementById('img-preview-'+id).innerHTML=
+      `<img src="${data}" style="max-width:100%;max-height:200px;border-radius:var(--radius-sm);display:block">
+       <div style="font-size:12px;color:var(--green);margin-top:4px">✓ 已上傳</div>`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function upRef(id){
+  const val=document.getElementById('rr-'+id)?.value.trim();
+  if(val&&!/^\d{5}$/.test(val))return alert('末五碼請填5位數字');
+  const O=getO();const o=O.find(x=>x.id===id);if(!o)return;
+  o.ref5=val;saveO(O);
+  const el=document.getElementById('rr-'+id);if(el)el.closest('.card').querySelector('[id^="rcpt-ref-"]').innerHTML+=`<div style="margin-top:8px;font-size:13px;color:var(--green)">✓ 已填入：<strong style="letter-spacing:.12em">${val}</strong></div>`;
+  alert('已儲存末五碼：'+val);
+}
+
+function showProof(src){
+  document.getElementById('proof-title').textContent='購買證明';
+  document.getElementById('proof-body').innerHTML=`<img src="${src}" style="max-width:100%;border-radius:var(--radius-sm)">`;
+  document.getElementById('modal-proof').classList.add('open');
+}
+
+// init
+renderS1();
+</script>
+</body>
+</html>
